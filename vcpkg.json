@@ -1,0 +1,12 @@
+{
+  "name" : "serialexperiments",
+  "version-string" : "1.0.0",
+  "dependencies" : [ {
+    "name" : "imgui",
+    "features" : [ "glfw-binding", "opengl3-binding" ]
+  }, {
+    "name" : "glfw3",
+    "version>=" : "3.4"
+  } ],
+  "builtin-baseline" : "cacf5994341f27e9a14a7b8724b0634b138ecb30"
+}
