@@ -1,3 +1,12 @@
 [submodule "deps/vcpkg"]
 	path = deps/vcpkg
 	url = https://github.com/microsoft/vcpkg.git
+[submodule "deps/CSerialPort"]
+	path = deps/CSerialPort
+	url = https://github.com/itas109/CSerialPort
+[submodule "deps/cc.ublox.generated"]
+	path = deps/cc.ublox.generated
+	url = https://github.com/commschamp/cc.ublox.generated.git
+[submodule "deps/comms"]
+	path = deps/comms
+	url = https://github.com/commschamp/comms.git

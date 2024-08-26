@@ -1,16 +1,15 @@
-// Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
-// (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
-
-// Learn about Dear ImGui:
-// - FAQ                  https://dearimgui.com/faq
-// - Getting Started      https://dearimgui.com/getting-started
-// - Documentation        https://dearimgui.com/docs (same as your local docs/ folder).
-// - Introduction, links and more at the top of imgui.cpp
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-#include <stdio.h>
+#include <cstdio>
+#include <session.h>
+#include <string>
+#include <vector>
+
+#include "CSerialPort/SerialPortInfo.h"
+
+using namespace itas109;
+
 #define GL_SILENCE_DEPRECATION
 #if defined(IMGUI_IMPL_OPENGL_ES2)
 #include <GLES2/gl2.h>
@@ -24,14 +23,66 @@
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+
+void appendText(const char* str);
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
+int countRead = 0;
+
+static ImVec2 windowSize = ImVec2(1600, 800);
+static int selectedIndex = -1;
+
+static std::vector<SerialPortInfo> availablePortsList = CSerialPortInfo::availablePortInfos();
+static ImVector<int> lineOffsets;
+static ImGuiTextBuffer textBuffer;
+
+static Session session;
+
+void appendText(const char* str) {
+    int old_size = textBuffer.size();
+
+    textBuffer.append(str);
+
+    for (const int new_size = textBuffer.size(); old_size < new_size; old_size++)
+        if (textBuffer[old_size] == '\n')
+            lineOffsets.push_back(old_size + 1);
+}
+
+void openConnection() {
+    if (selectedIndex > -1) {
+        const char* portName = availablePortsList[selectedIndex].portName;
+
+        session.start(portName);
+    }
+}
+
+void closeConnection() {
+    session.stop();
+}
+
+void clearOutput() {
+    textBuffer.clear();
+    lineOffsets.clear();
+}
+
 // Main code
 int main(int, char**)
 {
+    // printf("Version: %s\n\n", sp.getVersion());
+        //
+        // // write hex data
+        // char hex[5];
+        // hex[0] = 0x31;
+        // hex[1] = 0x32;
+        // hex[2] = 0x33;
+        // hex[3] = 0x34;
+        // hex[4] = 0x35;
+        // sp.writeData(hex, sizeof(hex));
+
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -74,23 +125,6 @@ int main(int, char**)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-    // - Read 'docs/FONTS.md' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    // - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != nullptr);
-
     // Our state
     bool show_demo_window = true;
     bool show_another_window = false;
@@ -111,40 +145,79 @@ int main(int, char**)
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         {
-            static float f = 0.0f;
-            static int counter = 0;
 
+
+            ImGui::SetNextWindowSize(windowSize);
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+            ImGui::PushID("port-selector");
+            ImGui::PushItemWidth(200.0f);
+            if (ImGui::BeginCombo("COM port", selectedIndex > -1 ? availablePortsList[selectedIndex].portName : "", ImGuiComboFlags_None)) {
+                const auto optionsLength = availablePortsList.size();
+                for (int n = 0; n < optionsLength; n++)
+                {
+                    const bool is_selected = (selectedIndex == n);
+                    if (ImGui::Selectable(availablePortsList[n].portName, is_selected)) {
+                        selectedIndex = n;
+                    }
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+                    // Set the initial focus when opening the combo (scrolling + keyboard navigation focus)
+                    if (is_selected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+            ImGui::PopItemWidth();
+            ImGui::PopID();
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
             ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
+            if (ImGui::Button("Connect")) {
+                openConnection();
+            }
 
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+            ImGui::SameLine();
+
+            if (ImGui::Button("Disconnect")) {
+                closeConnection();
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Clear Output")) {
+                clearOutput();
+            }
+
+            ImGui::Text("bytes emitted: %d", (int)textBuffer.size());
+
+
+
+            const char* buf = textBuffer.begin();
+            const char* buf_end = textBuffer.end();
+            ImGuiListClipper clipper;
+            clipper.Begin(lineOffsets.Size);
+
+            // ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+
+            // ImGui::TextUnformatted(buf, buf_end);
+
+            ImGui::PushID("output");
+            while (clipper.Step()) {
+                for (int line_no = clipper.DisplayStart; line_no < clipper.DisplayEnd; line_no++) {
+                    const char* line_start = buf + lineOffsets[line_no];
+                    const char* line_end = (line_no + 1 < lineOffsets.Size) ? (buf + lineOffsets[line_no + 1] - 1) : buf_end;
+                    ImGui::TextUnformatted(line_start, line_end);
+                }
+            }
+            clipper.End();
+
+            // ImGui::PopStyleVar();
+
+            ImGui::Text("%d lines", lineOffsets.Size);
+
+            ImGui::PopID();
+
             ImGui::End();
         }
 

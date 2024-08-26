@@ -35,5 +35,7 @@
 
 build
 cmake-build-debug
+vcpkg_installed
+
 
 
