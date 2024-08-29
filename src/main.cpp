@@ -23,6 +23,7 @@ using namespace itas109;
 #pragma comment(lib, "legacy_stdio_definitions")
 #endif
 
+using CfgValKeyId = cc_ublox::field::CfgValKeyIdCommon::ValueType;
 
 void appendText(const char* str);
 
@@ -41,6 +42,8 @@ static ImVector<int> lineOffsets;
 static ImGuiTextBuffer textBuffer;
 
 static Session session;
+
+// cc_ublox::field::CfgValKeyIdCommon::ValueType::CFG_MSGOUT_UBX_NAV_POSLLH_UART1
 
 void appendText(const char* str) {
     int old_size = textBuffer.size();
@@ -72,17 +75,6 @@ void clearOutput() {
 // Main code
 int main(int, char**)
 {
-    // printf("Version: %s\n\n", sp.getVersion());
-        //
-        // // write hex data
-        // char hex[5];
-        // hex[0] = 0x31;
-        // hex[1] = 0x32;
-        // hex[2] = 0x33;
-        // hex[3] = 0x34;
-        // hex[4] = 0x35;
-        // sp.writeData(hex, sizeof(hex));
-
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -125,9 +117,6 @@ int main(int, char**)
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop
@@ -146,8 +135,6 @@ int main(int, char**)
         ImGui::NewFrame();
 
         {
-
-
             ImGui::SetNextWindowSize(windowSize);
             ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
@@ -189,9 +176,19 @@ int main(int, char**)
                 clearOutput();
             }
 
+            ImGui::SameLine();
+
+            if (ImGui::Button("Enable NAV-POSLLH")) {
+                session.enableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Disable NAV-POSLLH")) {
+                session.disableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
+            }
+
             ImGui::Text("bytes emitted: %d", (int)textBuffer.size());
-
-
 
             const char* buf = textBuffer.begin();
             const char* buf_end = textBuffer.end();

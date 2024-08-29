@@ -27,6 +27,10 @@ class Session : public CSerialPortListener
     using InNavPvt = cc_ublox::message::NavPvt<InMessage>;
     using InNavPosLlh = cc_ublox::message::NavPosllh<InMessage>;
 
+    using OutCfgValset = cc_ublox::message::CfgValset<OutMessage>;
+    using CfgdataElement = cc_ublox::message::CfgValsetFields<>::CfgdataMembers::Element;
+    using CfgValKeyId = cc_ublox::field::CfgValKeyIdCommon::ValueType;
+
 public:
     Session();
     ~Session() override;
@@ -42,6 +46,12 @@ public:
     void handle(InMessage& msg);
 
     void onReadEvent(const char *portName, unsigned int readBufferLen) override;
+
+    void sendValSetWithSingleKeyValuePair(CfgValKeyId valKeyId, long valValue);
+
+    void enableMessage(CfgValKeyId valKeyId);
+
+    void disableMessage(CfgValKeyId valKeyId);
 
 private:
 

@@ -177,49 +177,45 @@ void Session::sendMessage(const OutMessage& msg)
 
 void Session::configureUbxOutput()
 {
-    // B5 62 06 8A 09 00 01 01 00 00 2A 00 91 20 01 77 00
+    using OutCfgValset = cc_ublox::message::CfgValset<OutMessage>;
+    OutCfgValset msg;
+    auto& layers = msg.field_layers();
+    auto& cfgData = msg.field_cfgdata().value();
 
-    unsigned char hex[17];
-    hex[0] = 0xb5;
-    hex[1] = 0x62;
-    hex[2] = 0x06;
-    hex[3] = 0x8a;
-    hex[4] = 0x09;
-    hex[5] = 0x00;
-    hex[6] = 0x01;
-    hex[7] = 0x01;
-    hex[8] = 0x00;
-    hex[9] = 0x00;
-    hex[10] = 0x2a;
-    hex[11] = 0x00;
-    hex[12] = 0x91;
-    hex[13] = 0x20;
-    hex[14] = 0x01;
-    hex[15] = 0x77;
-    hex[16] = 0x00;
+    layers.setBitValue_ram(true);
 
-    auto bytesWritten = m_sp.writeData(hex, sizeof(hex));
+    using CfgdataElement = cc_ublox::message::CfgValsetFields<>::CfgdataMembers::Element;
+    cc_ublox::field::CfgValKeyIdCommon::ValueType valType = cc_ublox::field::CfgValKeyIdCommon::ValueType::CFG_MSGOUT_UBX_NAV_POSLLH_UART1;
 
-    printf("wrote %d\n", bytesWritten);
+    CfgdataElement valsetElement;
+    valsetElement.field_key().setValue(cc_ublox::field::CfgValKeyIdCommon::ValueType::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
+    valsetElement.field_val().initField_l().setValue(1);
 
-    return;
-
-    // using OutCfgValset = cc_ublox::message::CfgValset<OutMessage>;
-    //
-    // OutCfgValset msg;
-    // auto& layers = msg.field_layers();
-    // auto& cfgData = msg.field_cfgdata();
-    //
-    // cc_ublox::message::CfgValsetFields<>::Cfgdata a;
-    //
-    // cc_ublox::field::CfgValPairSimple b;
-    //
-    // b.field_key().setValue(0xa2);
-    // b.field_val().setValue(1);
-    //
-    // cfgData.setValue(b);
-    //
-    // layers.setBitValue_ram(true);
-    //
-    // sendMessage(msg);
+    cfgData.push_back(valsetElement);
 }
+
+void Session::sendValSetWithSingleKeyValuePair(CfgValKeyId valKeyId, long valValue) {
+    OutCfgValset msg;
+    auto& layers = msg.field_layers();
+    auto& cfgData = msg.field_cfgdata().value();
+
+    layers.setBitValue_ram(true);
+
+    CfgdataElement valsetElement;
+    valsetElement.field_key().setValue(valKeyId);
+    valsetElement.field_val().initField_l().setValue(valValue);
+
+    cfgData.push_back(valsetElement);
+
+    sendMessage(msg);
+};
+
+void Session::enableMessage(CfgValKeyId valKeyId) {
+    sendValSetWithSingleKeyValuePair(valKeyId, 1);
+};
+
+void Session::disableMessage(CfgValKeyId valKeyId) {
+    sendValSetWithSingleKeyValuePair(valKeyId, 0);
+
+};
+
