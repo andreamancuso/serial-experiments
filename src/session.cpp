@@ -1,6 +1,3 @@
-#include "shared.h"
-#include "session.h"
-
 #include <iostream>
 #include <cassert>
 
@@ -11,8 +8,14 @@
 
 #include "CSerialPort/SerialPort.h"
 #include "CSerialPort/SerialPortInfo.h"
+#include <nlohmann/json.hpp>
+
+#include "shared.h"
+#include "session.h"
+#include "json_converter.h"
 
 using namespace itas109;
+using json = nlohmann::json;
 
 Session::Session() : m_inputBuf() {};
 
@@ -76,7 +79,7 @@ void Session::onReadEvent(const char *portName, unsigned int readBufferLen)
 
                         m_inData.push_back(data[i]);
 
-                        printf("Here begins a new message\n");
+                        // printf("Here begins a new message\n");
                     } else {
                         m_inData.push_back(data[i]);
                     }
@@ -97,6 +100,10 @@ void Session::onReadEvent(const char *portName, unsigned int readBufferLen)
 
 void Session::handle(InNavPvt& msg)
 {
+    // auto& fields = msg.fields();
+
+    // std::apply([](auto&&... args) {((std::cout << args << '\n'), ...);}, fields);
+
     std::cout << "POS: lat=" << comms::units::getDegrees<double>(msg.field_lat()) <<
         "; lon=" << comms::units::getDegrees<double>(msg.field_lon()) <<
         "; alt=" << comms::units::getMeters<double>(msg.field_height()) << std::endl;
@@ -115,10 +122,22 @@ void Session::handle(InNavPosLlh& msg)
 
 void Session::handle(InMessage& msg)
 {
-    printf("here 2\n");
+    // printf("here 2\n");
 
-    static_cast<void>(msg); // ignore
+    // static_cast<void>(msg); // ignore
+
+    json json;
+    comms::util::tupleForEach(msg.fields(), JsonConverter(json));
 }
+
+// template <typename TMsg>
+//     void handle(TMsg& msg)
+// {
+//     printf("here 3\n");
+//
+//     json json;
+//     comms::util::tupleForEach(msg.fields(), JsonConverter(json));
+//  }
 
 void Session::processInputData()
 {

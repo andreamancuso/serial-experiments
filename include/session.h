@@ -61,7 +61,7 @@ private:
     InNavPosLlh,InNavPvt
         >;
 
-    using Frame = cc_ublox::frame::UbloxFrame<InMessage, AllInMessages>;
+    using Frame = cc_ublox::frame::UbloxFrame<InMessage>;
 
     void processInputData();
     void sendPosPoll();
