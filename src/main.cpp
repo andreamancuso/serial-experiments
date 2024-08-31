@@ -179,13 +179,37 @@ int main(int, char**)
             ImGui::SameLine();
 
             if (ImGui::Button("Enable NAV-POSLLH")) {
-                session.enableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
+                // session.enableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
             }
 
             ImGui::SameLine();
 
             if (ImGui::Button("Disable NAV-POSLLH")) {
-                session.disableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
+                // session.disableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_POSLLH_UART1);
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Enable NAV-PVT")) {
+                // session.enableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_PVT_UART1);
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Disable NAV-PVT")) {
+                // session.disableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_PVT_UART1);
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Enable NAV-SAT")) {
+                // session.enableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_SAT_UART1);
+            }
+
+            ImGui::SameLine();
+
+            if (ImGui::Button("Disable NAV-SAT")) {
+                // session.disableMessage(CfgValKeyId::CFG_MSGOUT_UBX_NAV_SAT_UART1);
             }
 
             ImGui::Text("bytes emitted: %d", (int)textBuffer.size());

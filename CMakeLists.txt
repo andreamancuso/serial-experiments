@@ -2,7 +2,19 @@ cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_GENERATOR "Ninja")
 set(CMAKE_TOOLCHAIN_FILE deps/vcpkg/scripts/buildsystems/vcpkg.cmake)
-set(VCPKG_TARGET_TRIPLET "x64-linux")
+if (WIN32)
+    set(VCPKG_TARGET_TRIPLET "x64-windows")
+    add_compile_options(/bigobj)
+else()
+    set(VCPKG_TARGET_TRIPLET "x64-linux")
+    # TODO: What about other platforms?
+endif()
+
+#if (MSVC)
+    add_compile_options(/bigobj)
+#else ()
+#    add_compile_options(-Wa,-mbig-obj)
+#endif ()
 
 project(serial-experiments LANGUAGES C CXX)
 
@@ -13,6 +25,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(imgui CONFIG REQUIRED)
 find_package(CSerialPort QUIET)
 find_package(LibCommsdsl CONFIG REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 set(DEPS ${CMAKE_CURRENT_SOURCE_DIR}/deps)
 
@@ -31,4 +44,4 @@ target_include_directories(
     ${DEPS}/cc.ublox.generated/include
 )
 
-target_link_libraries(serial-experiments PRIVATE imgui::imgui OpenGL::GL glfw cc::commsdsl ${CSerialPort_LIBRARY})
+target_link_libraries(serial-experiments PRIVATE imgui::imgui OpenGL::GL glfw cc::commsdsl nlohmann_json::nlohmann_json ${CSerialPort_LIBRARY})
