@@ -24,13 +24,6 @@ class Session : public CSerialPortListener
             comms::option::LengthInfoInterface
         >;
 
-    using InNavPvt = cc_ublox::message::NavPvt<InMessage>;
-    using InNavPosLlh = cc_ublox::message::NavPosllh<InMessage>;
-
-    using OutCfgValset = cc_ublox::message::CfgValset<OutMessage>;
-    using CfgdataElement = cc_ublox::message::CfgValsetFields<>::CfgdataMembers::Element;
-    using CfgValKeyId = cc_ublox::field::CfgValKeyIdCommon::ValueType;
-
 public:
     Session();
     ~Session() override;
@@ -39,34 +32,13 @@ public:
 
     void stop();
 
-    void handle(InNavPvt& msg);
-
-    void handle(InNavPosLlh& msg);
-
-    void handle(InMessage& msg);
+    template <typename TMsg>
+    void handle(TMsg& msg);
 
     void onReadEvent(const char *portName, unsigned int readBufferLen) override;
 
-    void sendValSetWithSingleKeyValuePair(CfgValKeyId valKeyId, long valValue);
-
-    void enableMessage(CfgValKeyId valKeyId);
-
-    void disableMessage(CfgValKeyId valKeyId);
-
 private:
-
-    using AllInMessages =
-        std::tuple<
-
-    InNavPosLlh,InNavPvt
-        >;
-
     using Frame = cc_ublox::frame::UbloxFrame<InMessage>;
-
-    void processInputData();
-    void sendPosPoll();
-    void sendMessage(const OutMessage& msg);
-    void configureUbxOutput();
 
     std::array<std::uint8_t, 512> m_inputBuf;
     std::vector<std::uint8_t> m_inData;
