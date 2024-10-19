@@ -2,7 +2,11 @@ cmake_minimum_required(VERSION 3.8)
 
 set(CMAKE_GENERATOR "Ninja")
 set(CMAKE_TOOLCHAIN_FILE deps/vcpkg/scripts/buildsystems/vcpkg.cmake)
-set(VCPKG_TARGET_TRIPLET "x64-linux")
+if (WIN32)
+    set(VCPKG_TARGET_TRIPLET "x64-windows")
+else()
+    set(VCPKG_TARGET_TRIPLET "x64-linux")
+endif()
 
 project(serial-experiments LANGUAGES C CXX)
 
